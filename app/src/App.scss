@@ -1,32 +1,86 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap');
 
-$pfont: 'Open Sans',
-sans-serif;
+$pfont: 'Open Sans', sans-serif;
 $pcolor: #cc0000;
 
-
 html {
-    font-family: $pfont;
+  font-family: $pfont;
 }
 
 .sign-person-overlay {
-    position: absolute;
-    width: 420px;
-
+  position: absolute;
+  width: 420px;
 }
 
 .app__container {
-    justify-content: center;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    height: 100vh;
-    width: 100vw;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
 }
 
 .webcam-frame-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.web_cam__container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  padding: 10px;
+  flex-direction: column;
+
+  .predicted_label__title {
+    color: #0b666a;
+  }
+
+  .web_cam__video {
+    width: 50vw;
+    height: 50vh;
+
+    align-self: center;
+  }
+
+  .predicted_label__container {
+    width: 100px;
+    border: 1px solid rgb(38, 39, 39);
+    border-radius: 5px;
+
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
+    align-content: center;
+  }
+
+  .label__input {
+    height: 40px;
+    min-width: 250px;
+    border-radius: 5px;
+    padding-left: 10px;
+  }
+
+  .button_row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-top: 20px;
+
+    .input_btn {
+      cursor: pointer;
+      padding: 15px;
+      padding-right: 25px;
+      padding-left: 25px;
+      border-radius: 5px;
+      box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+      border: none;
+      background-color: #35a29f;
+      color: #fff;
+    }
+  }
 }
