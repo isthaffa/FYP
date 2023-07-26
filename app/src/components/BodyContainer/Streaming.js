@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
 import axios from 'axios';
+import React, { useEffect, useRef, useState } from 'react';
 
-import sampleModel from './model.json';
 import Header from '../Header/Header';
+import sampleModel from './model.json';
 
 import NavBar from '../NavBar';
 
@@ -25,6 +25,42 @@ const letters = {
   ig: 'ග්',
   t: 'ටී',
 };
+
+const sentences = ["මම තරහයි",
+             "මම කැරම් වලට කැමතියි",
+             "මම පිරිසිදුයි",
+             "මම රජයට ආදරෙයි",
+             "ඔයාගේ ගෙදර කොහෙද",
+             "මම ඔයාට ආදරෙයි",
+             "මම ගණිතයට කැමතියි",
+             "මම පාඩම්කරන්නට කැමතියි",
+             "වෙලාව කීයද",
+             "මම ගස් වලට කැමතියි",
+             "ආයුබෝවන්",
+             "ඔයා වැඩකරන්නේ කොහෙද",
+             "කැස්බෑවා කොහෙද",
+             "මම පරීක්ෂණයට කැමතියි",
+             "මම පාඩම්කරනවා",
+             "අද",
+             "අවුරුදු",
+             "ඊළඟ",
+             "එළවළු",
+             "නැග්ගා",
+             "අලුත් අවුරුද්ද",
+             "ඔහු වෙනුවෙන්",
+             "ආයුඛෝවන්",
+             "කොහොමද සැප සනිප",
+             "හොඳින් ඉන්නවා",
+             "හුග කාලෙකින් දක්කෙ",
+             "සුභ උදෑසනක්",
+             "සුභ රාත්‍රියක්",
+             "සුභ දවසක්",
+             "විනොදෙන් කන්න",
+             "කරැණාකරල හෙමින් කියන්න",
+             "සමාවත්ත",
+             "එකත කමක් න",
+             ]
+
 
 const TrainingPage = () => {
   const webcamRef = useRef(null);
@@ -117,13 +153,12 @@ const TrainingPage = () => {
     }
   };
 
-  function fetchSuggestion(wordInput) {
+  function fetchSuggestion(wordsInput) {
     try {
       axios
-        .post('http://127.0.0.1:5001/sentence-suggest', { wordInput }, {})
+        .post('http://127.0.0.1:5001/sentence-suggest', { wordsInput }, {})
         .then((response) => {
-          debugger;
-          setSuggestionNode(response.data.node);
+          setSuggestionNode(sentences[response.data.node]);
         });
     } catch (e) {
       console.error(e);
@@ -185,7 +220,7 @@ const TrainingPage = () => {
         >
           <input value={label} className="label__input" disabled />
           {suggestionNode && suggestionNode !== '' && (
-            <div>Suggestions: {suggestionNode}</div>
+            <div>Suggestions: {suggestionNode }</div>
           )}
         </div>
 

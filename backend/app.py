@@ -194,6 +194,8 @@ def get_node():
         return jsonify({"error": "No wordsInput provided in the request body."}), 400
 
     node = sentence_prediction(words_input)
+    output = sentences[node]
+    
     return jsonify({"node": node})
 
 # def gen_frames():
@@ -408,7 +410,7 @@ def serialisePreds(predictions):
     topPreds = []
     for i, pred in enumerate(predictions[0], start=0):
         letter, confidence = predictions[0][i]
-        topPreds.append((letter, round(confidence*100, 8)))
+        topPreds.append((letter, round(confidence*100-10, 8)))
     return topPreds
 
 

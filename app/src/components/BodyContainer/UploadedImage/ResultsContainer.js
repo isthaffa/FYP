@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import "../LoadingIcon.scss";
 import resetIcon from "../../../assets/icons/reset-icon.png";
+import "../LoadingIcon.scss";
 import "./ResultsContainer.scss";
 export default class ResultsContainer extends Component {
 
@@ -17,8 +17,8 @@ export default class ResultsContainer extends Component {
                     <p className="second-column--title-text"> Your sign translates to the letter:</p>
                     {!this.props.loading &&
                     <div>
-                        {this.renderSinglePrediction(0)}
-                        {this.renderSinglePrediction(1)}
+                        {/* {this.renderSinglePrediction(0)}
+                        {this.renderSinglePrediction(1)} */}
                         {this.renderSinglePrediction(2)}
                     </div>
                     }
