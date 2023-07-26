@@ -175,7 +175,14 @@ const TrainingPage = () => {
           </div>
         )}
         <br />
-        <div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 15,
+            alignItems: 'center',
+          }}
+        >
           <input value={label} className="label__input" disabled />
           {suggestionNode && suggestionNode !== '' && (
             <div>Suggestions: {suggestionNode}</div>
