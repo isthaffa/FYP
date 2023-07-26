@@ -3,18 +3,20 @@ import io
 import mediapipe as mp
 import cv2
 import keyboard
-from flask import Response
-
+from flask import Response, request, jsonify
+import nltk
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.applications.mobilenet import preprocess_input
+from gensim.models.doc2vec import Doc2Vec
+from nltk.tokenize import word_tokenize
 import time
-
 from tensorflow.keras import models
 from PIL import ImageFont, ImageDraw, Image
 import numpy as np
 import flask
 from flask_cors import CORS
+
 
 # from my_functions import *
 
@@ -39,12 +41,50 @@ model = None
 time.sleep(2.0)
 
 
-mp_holistic = mp.solutions.holistic # Holistic model
-mp_drawing = mp.solutions.drawing_utils # Drawing utilities
+mp_holistic = mp.solutions.holistic  # Holistic model
+mp_drawing = mp.solutions.drawing_utils  # Drawing utilities
+
+sentences = ["මම තරහයි",
+             "මම කැරම් වලට කැමතියි",
+             "මම පිරිසිදුයි",
+             "මම රජයට ආදරෙයි",
+             "ඔයාගේ ගෙදර කොහෙද",
+             "මම ඔයාට ආදරෙයි",
+             "මම ගණිතයට කැමතියි",
+             "මම පාඩම්කරන්නට කැමතියි",
+             "වෙලාව කීයද",
+             "මම ගස් වලට කැමතියි",
+             "ආයුබෝවන්",
+             "ඔයා වැඩකරන්නේ කොහෙද",
+             "කැස්බෑවා කොහෙද",
+             "මම පරීක්ෂණයට කැමතියි",
+             "මම පාඩම්කරනවා",
+             "අද",
+             "අවුරුදු",
+             "ඊළඟ",
+             "එළවළු",
+             "නැග්ගා",
+             "අලුත් අවුරුද්ද",
+             "ඔහු වෙනුවෙන්",
+             "ආයුඛෝවන්",
+             "කොහොමද සැප සනිප",
+             "හොඳින් ඉන්නවා",
+             "හුග කාලෙකින් දක්කෙ",
+             "සුභ උදෑසනක්",
+             "සුභ රාත්‍රියක්",
+             "සුභ දවසක්",
+             "විනොදෙන් කන්න",
+             "කරැණාකරල හෙමින් කියන්න",
+             "සමාවත්ත",
+             "එකත කමක් න",
+             ]
+
 
 def draw_landmarks(image, results):
-    mp.solutions.drawing_utils.draw_landmarks(image, results.left_hand_landmarks, mp.solutions.holistic.HAND_CONNECTIONS)
-    mp.solutions.drawing_utils.draw_landmarks(image, results.right_hand_landmarks, mp.solutions.holistic.HAND_CONNECTIONS)
+    mp.solutions.drawing_utils.draw_landmarks(
+        image, results.left_hand_landmarks, mp.solutions.holistic.HAND_CONNECTIONS)
+    mp.solutions.drawing_utils.draw_landmarks(
+        image, results.right_hand_landmarks, mp.solutions.holistic.HAND_CONNECTIONS)
 
 
 def image_process(image, model):
@@ -55,10 +95,14 @@ def image_process(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     return results
 
+
 def keypoint_extraction(results):
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(63)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(63)
+    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten(
+    ) if results.left_hand_landmarks else np.zeros(63)
+    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten(
+    ) if results.right_hand_landmarks else np.zeros(63)
     return np.concatenate([lh, rh])
+
 
 def action_detections(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -68,17 +112,27 @@ def action_detections(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image, results
 
+
 def drawing_image_landmarks(image, results):
-    mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACEMESH_TESSELATION, mp_drawing.DrawingSpec(color=(242,172,188), thickness=1, circle_radius=1), mp_drawing.DrawingSpec(color=(149,249,100), thickness=1, circle_radius=1))
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4), mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2))
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4), mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2))
-    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4), mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2))
+    mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACEMESH_TESSELATION, mp_drawing.DrawingSpec(color=(
+        242, 172, 188), thickness=1, circle_radius=1), mp_drawing.DrawingSpec(color=(149, 249, 100), thickness=1, circle_radius=1))
+    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, mp_drawing.DrawingSpec(color=(
+        80, 22, 10), thickness=2, circle_radius=4), mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=2, circle_radius=2))
+    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=(
+        121, 22, 76), thickness=2, circle_radius=4), mp_drawing.DrawingSpec(color=(121, 44, 250), thickness=2, circle_radius=2))
+    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, mp_drawing.DrawingSpec(color=(
+        245, 117, 66), thickness=2, circle_radius=4), mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2))
+
 
 def extracting_image_keypoints(results):
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
-    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
+    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten(
+    ) if results.pose_landmarks else np.zeros(33*4)
+    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten(
+    ) if results.face_landmarks else np.zeros(468*3)
+    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten(
+    ) if results.left_hand_landmarks else np.zeros(21*3)
+    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten(
+    ) if results.right_hand_landmarks else np.zeros(21*3)
     return np.concatenate([pose, face, lh, rh])
 
 
@@ -87,14 +141,27 @@ for ip camera use - rtsp://username:password@ip_address:554/user=username_passwo
 for local webcam use cv2.VideoCapture(0)
 '''
 
-actions = np.array(['a' ,'aah', 'ae', 'aeh', 'ah' ,'ee' ,'eeh' ,'ig' ,'k' ,'o' ,'oh' ,'t' ,'uh'])
-letter={
-"ah": "අ", "aah": "ආ", "aeh": "ඇ",  "ee": "ඉ", "eeh": "ඊ", "uh": "උ", "uhh": "ඌ", "a": "එ",
-	    "ae": "ඒ", "o": "ඔ", "oh": "ඕ","k":"ක්","ig":"ග්","t":"ටී"
+actions = np.array(['a', 'aah', 'ae', 'aeh', 'ah', 'ee',
+                   'eeh', 'ig', 'k', 'o', 'oh', 't', 'uh'])
+letter = {
+    "ah": "අ", "aah": "ආ", "aeh": "ඇ",  "ee": "ඉ", "eeh": "ඊ", "uh": "උ", "uhh": "ඌ", "a": "එ",
+    "ae": "ඒ", "o": "ඔ", "oh": "ඕ", "k": "ක්", "ig": "ග්", "t": "ටී"
 }
 
 cnn_model = load_model('cnn2')
 sentence, keypoints = [' '], []
+
+
+def sentence_prediction(words_input):
+    model = Doc2Vec.load(
+        os.path.join('d2v.model'))
+    predicted_words = word_tokenize(words_input.lower())
+    predicted_sentence = model.infer_vector(predicted_words)
+    highest_similarity = model.docvecs.most_similar(
+        positive=[predicted_sentence])
+    print(highest_similarity)
+    return highest_similarity[0][0]
+
 
 def load_model():
     global model
@@ -115,11 +182,21 @@ def prepare_image(image, target):
 
 
 @app.route("/", methods=["GET"])
-
 def index():
     return "<p>Welcome to Sign Interpreter SSL API.<p>"
 
-# def gen_frames():  
+
+@app.route("/sentence-suggest", methods=["POST"])
+def get_node():
+    data = request.get_json()
+    words_input = data.get("wordsInput", "")
+    if not words_input:
+        return jsonify({"error": "No wordsInput provided in the request body."}), 400
+
+    node = sentence_prediction(words_input)
+    return jsonify({"node": node})
+
+# def gen_frames():
 #     while True:
 #         success, frame = camera.read()  # read the camera frame
 #         if not success:
@@ -127,13 +204,13 @@ def index():
 #         else:
 #             ret, buffer = cv2.imencode('.jpg', frame)
 #             frame = buffer.tobytes()
-            
-            
+
+
 #             yield (b'--frame\r\n'
 #                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
 
-# def gen_frames():  
+# def gen_frames():
 #     while True:
 #         success, frame = camera.read()  # read the camera frame
 #         if not success:
@@ -141,8 +218,8 @@ def index():
 #         else:
 #             ret, buffer = cv2.imencode('.jpg', frame)
 #             frame = buffer.tobytes()
-            
-            
+
+
 #             yield (b'--frame\r\n'
 #                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
@@ -152,6 +229,8 @@ def index():
 #     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 result = ""
+
+
 @app.route('/video_feed_sentence')
 def video_feed_sentence():
     return {'result': result}
@@ -161,12 +240,15 @@ def video_feed_sentence():
 def video_feed():
     return Response(detect(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
 cap = cv2.VideoCapture(0)
+
+
 def detect():
     keypoints = []
     sentence = ''
     threshold = 0.4
-    
+
     mp_holistics = mp.solutions.holistic
     mp_drawing = mp.solutions.drawing_utils
 
@@ -180,20 +262,21 @@ def detect():
                 keypoints = np.array(keypoints)
                 prediction = cnn_model.predict(keypoints[np.newaxis, :, :])
                 print(np.argmax(prediction))
-                print( np.amax(prediction))
+                print(np.amax(prediction))
                 keypoints = []
                 if np.amax(prediction) > 0.6:
-                        sentence = letter.get(actions[np.argmax(prediction)])
+                    sentence = letter.get(actions[np.argmax(prediction)])
 
             # if len(sentence) > 7:
             #     sentence = sentence[-7:]
-            
+
             if keyboard.is_pressed(' '):
                 sentence = ' '
 
-            textsize = cv2.getTextSize(sentence, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+            textsize = cv2.getTextSize(
+                sentence, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
             text_X_coord = (image.shape[1] - textsize[0]) // 2
-            
+
             fontpath = "iskpota.ttf"
             font = ImageFont.truetype(fontpath, 32)
             img_pill = Image.fromarray(image)
@@ -201,22 +284,23 @@ def detect():
             #draw.text((10, 120), sentence, font=font)
             image = np.array(img_pill)
             result = sentence
-            # cv2.putText(image, sentence, (text_X_coord, 470), 
+            # cv2.putText(image, sentence, (text_X_coord, 470),
             #                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        
+
             cv2.imshow('Camera', image)
             # time.sleep(2)
             cv2.waitKey(1)
-            if cv2.getWindowProperty('Camera',cv2.WND_PROP_VISIBLE) < 1:
+            if cv2.getWindowProperty('Camera', cv2.WND_PROP_VISIBLE) < 1:
                 break
 
             ret, buffer = cv2.imencode('.jpg', image)
             image = buffer.tobytes()
-            
-            
+
             yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + image + b'\r\n')
 
 # @app.route("/stream", methods=["GET"])
+
+
 def stream():
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -227,7 +311,7 @@ def stream():
         while cap.isOpened():
             _, image = cap.read()
             results = image_process(image, holistic)
-            draw_landmarks(image,results)
+            draw_landmarks(image, results)
             keypoints.append(keypoint_extraction(results))
 
             if len(keypoints) == 25:
@@ -237,24 +321,25 @@ def stream():
                 print(actions[np.argmax(prediction)])
                 if np.amax(prediction) > 0.7:
                     if sentence[-1] != actions[np.argmax(prediction)]:
-                        sentence.append( actions[np.argmax(prediction)])
+                        sentence.append(actions[np.argmax(prediction)])
 
             if len(sentence) > 7:
                 sentence = sentence[-7:]
-            
+
             if keyboard.is_pressed(' '):
                 sentence = [' ']
 
-            textsize = cv2.getTextSize(' '.join(sentence), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+            textsize = cv2.getTextSize(
+                ' '.join(sentence), cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
             text_X_coord = (image.shape[1] - textsize[0]) // 2
-                
-            cv2.putText(image, ' '.join(sentence), (text_X_coord, 470), 
+
+            cv2.putText(image, ' '.join(sentence), (text_X_coord, 470),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        
+
             cv2.imshow('Camera', image)
-            
+
             cv2.waitKey(1)
-            if cv2.getWindowProperty('Camera',cv2.WND_PROP_VISIBLE) < 1:
+            if cv2.getWindowProperty('Camera', cv2.WND_PROP_VISIBLE) < 1:
                 break
 
         cap.release()
@@ -279,39 +364,45 @@ def predict():
                 'success': True,
                 'predictions': [{
                     'letter': predictions[0][0],
-                    'confidence': predictions[0][1]},{
+                    'confidence': predictions[0][1]}, {
                     'letter': predictions[1][0],
-                    'confidence': predictions[1][1]},{
+                    'confidence': predictions[1][1]}, {
                     'letter': predictions[2][0],
                     'confidence': predictions[2][1]
-                    }]
+                }]
             }
 
     return flask.jsonify(response)
 
+
 def getTopPredictions(preds):
-    class_labels ={'A': 0,
- 'Aah': 1,
- 'Ae': 2,
- 'Aeh': 3,
- 'Ah': 4,
- 'Ee': 5,
- 'Eeh': 6,
- 'Ig': 7,
- 'K': 8,
- 'O': 9,
- 'Ohh': 10,
- 'T': 11,
- 'Uh': 12,
- 'Uhh': 13}
+    class_labels = {'A': 0,
+                    'Aah': 1,
+                    'Ae': 2,
+                    'Aeh': 3,
+                    'Ah': 4,
+                    'Ee': 5,
+                    'Eeh': 6,
+                    'Ig': 7,
+                    'K': 8,
+                    'O': 9,
+                    'Ohh': 10,
+                    'T': 11,
+                    'Uh': 12,
+                    'Uhh': 13}
     # map preds index with probability to correct letter from dictonary
     sorted_indices = np.argsort(preds)
     top_three_indices = sorted_indices[-3:]
-    label1 = list(class_labels.keys())[list(class_labels.values()).index(top_three_indices[0])]
-    label2 = list(class_labels.keys())[list(class_labels.values()).index(top_three_indices[1])]
-    label3 =list(class_labels.keys())[list(class_labels.values()).index(top_three_indices[2])]
-    top_preds = [[label1,preds[top_three_indices[0]]],[label2,preds[top_three_indices[1]]], [label3,preds[top_three_indices[2]]]]
+    label1 = list(class_labels.keys())[
+        list(class_labels.values()).index(top_three_indices[0])]
+    label2 = list(class_labels.keys())[
+        list(class_labels.values()).index(top_three_indices[1])]
+    label3 = list(class_labels.keys())[
+        list(class_labels.values()).index(top_three_indices[2])]
+    top_preds = [[label1, preds[top_three_indices[0]]], [
+        label2, preds[top_three_indices[1]]], [label3, preds[top_three_indices[2]]]]
     return top_preds, preds
+
 
 def serialisePreds(predictions):
     topPreds = []
@@ -320,16 +411,17 @@ def serialisePreds(predictions):
         topPreds.append((letter, round(confidence*100, 8)))
     return topPreds
 
+
 @app.errorhandler(500)
 def internal_server_error(error):
     response = {'success': False}
     print(error)
     return flask.jsonify(response)
 
+
 print("Loading Model...")
-load_model() #Load model before apps run to prevent long loading time
+load_model()  # Load model before apps run to prevent long loading time
 print("Model Loaded. Server Running.")
 
-if __name__ == "__main__":  #if running on development
+if __name__ == "__main__":  # if running on development
     app.run(debug=True, threaded=False, host='0.0.0.0', port=5001)
-

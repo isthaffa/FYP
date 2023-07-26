@@ -1,7 +1,8 @@
+import React, { useEffect, useRef, useState } from 'react';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
-import React, { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 
 import sampleModel from './model.json';
 import Header from '../Header/Header';
@@ -34,6 +35,7 @@ const TrainingPage = () => {
 
   const [predictedLabel, setPredictedLabel] = useState(null);
   const [label, setLabel] = useState('');
+  const [suggestionNode, setSuggestionNode] = useState('');
 
   useEffect(() => {
     const createKNNClassifier = async () => {
@@ -115,9 +117,27 @@ const TrainingPage = () => {
     }
   };
 
+  function fetchSuggestion(wordInput) {
+    try {
+      axios
+        .post('http://127.0.0.1:5001/sentence-suggest', { wordInput }, {})
+        .then((response) => {
+          debugger;
+          setSuggestionNode(response.data.node);
+        });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   function handleSaveInput() {
     if (predictedLabel) {
       setLabel(label + letters[predictedLabel]);
+      if (label.length > 1) {
+        fetchSuggestion(label + letters[predictedLabel]);
+      } else {
+        setSuggestionNode('');
+      }
     }
   }
 
@@ -155,7 +175,12 @@ const TrainingPage = () => {
           </div>
         )}
         <br />
-        <input value={label} className="label__input" disabled />
+        <div>
+          <input value={label} className="label__input" disabled />
+          {suggestionNode && suggestionNode !== '' && (
+            <div>Suggestions: {suggestionNode}</div>
+          )}
+        </div>
 
         <div className="button_row">
           <button className="input_btn" onClick={handleSaveInput}>
