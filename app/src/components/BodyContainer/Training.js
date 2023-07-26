@@ -7,7 +7,7 @@ import sampleModel from './model.json';
 
 const letters = {
   ah: 'අ',
-  aah: 'ආ',
+  ahh: 'ආ',
   aeh: 'ඇ',
   ee: 'ඉ',
   eeh: 'ඊ',
@@ -16,7 +16,7 @@ const letters = {
   a: 'එ',
   ae: 'ඒ',
   o: 'ඔ',
-  oh: 'ඕ',
+  ohh: 'ඕ',
   k: 'ක්',
   ig: 'ග්',
   t: 'ටී',
