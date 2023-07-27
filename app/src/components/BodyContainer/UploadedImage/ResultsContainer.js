@@ -2,11 +2,28 @@ import React, { Component } from 'react';
 import resetIcon from "../../../assets/icons/reset-icon.png";
 import "../LoadingIcon.scss";
 import "./ResultsContainer.scss";
+
+const letters = {
+    ah: 'අ',
+    ahh: 'ආ',
+    aeh: 'ඇ',
+    ee: 'ඉ',
+    eeh: 'ඊ',
+    uh: 'උ',
+    uhh: 'ඌ',
+    a: 'එ',
+    ae: 'ඒ',
+    o: 'ඔ',
+    ohh: 'ඕ',
+    k: 'ක්',
+    ig: 'ග්',
+    t: 'ටී',
+  };
 export default class ResultsContainer extends Component {
 
     renderSinglePrediction = (indexInPreds) => {
         return (
-            <p className="single-prediction__container"><p className="preds-letter">{this.props.predictions[indexInPreds].letter} </p> &nbsp; <p style={{color: "#333", fontSize: "17px", textAlign: "center", margin: 0}}> with {this.props.predictions[indexInPreds].confidence}% confidence</p> </p>
+            <p className="single-prediction__container"><p className="preds-letter">{letters[this.props.predictions[indexInPreds].letter]} </p> &nbsp; <p style={{color: "#333", fontSize: "17px", textAlign: "center", margin: 0}}> with {this.props.predictions[indexInPreds].confidence}% confidence</p> </p>
         )
     }
     

@@ -165,7 +165,7 @@ def sentence_prediction(words_input):
 
 def load_model():
     global model
-    model = models.load_model("Inceptionresnet.h5")
+    model = models.load_model("model.h5")
 
 
 def prepare_image(image, target):
@@ -378,20 +378,20 @@ def predict():
 
 
 def getTopPredictions(preds):
-    class_labels = {'A': 0,
-                    'Aah': 1,
-                    'Ae': 2,
-                    'Aeh': 3,
-                    'Ah': 4,
-                    'Ee': 5,
-                    'Eeh': 6,
-                    'Ig': 7,
-                    'K': 8,
-                    'O': 9,
-                    'Ohh': 10,
-                    'T': 11,
-                    'Uh': 12,
-                    'Uhh': 13}
+    class_labels = {'a': 0,
+                    'ahh': 1,
+                    'ae': 2,
+                    'aeh': 3,
+                    'ah': 4,
+                    'ee': 5,
+                    'eeh': 6,
+                    'ig': 7,
+                    'k': 8,
+                    'oh': 9,
+                    'ohh': 10,
+                    't': 11,
+                    'uh': 12,
+                    'uhh': 13}
     # map preds index with probability to correct letter from dictonary
     sorted_indices = np.argsort(preds)
     top_three_indices = sorted_indices[-3:]
@@ -410,7 +410,7 @@ def serialisePreds(predictions):
     topPreds = []
     for i, pred in enumerate(predictions[0], start=0):
         letter, confidence = predictions[0][i]
-        topPreds.append((letter, round(confidence*100-10, 8)))
+        topPreds.append((letter, round(confidence*100-6, 8)))
     return topPreds
 
 
