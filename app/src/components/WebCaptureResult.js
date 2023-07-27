@@ -1,5 +1,21 @@
 import React, { useEffect, useState } from 'react';
-
+const letters = {
+  ah: 'අ',
+  ahh: 'ආ',
+  aeh: 'ඇ',
+  ee: 'ඉ',
+  eeh: 'ඊ',
+  uh: 'උ',
+  uhh: 'ඌ',
+  a: 'එ',
+  ae: 'ඒ',
+  o: 'ඔ',
+  oh:'ඔ',
+  ohh: 'ඕ',
+  k: 'ක්',
+  ig: 'ග්',
+  t: 'ටී',
+};
 const WebCaptureResult = (props) => {
   const { toggleOffWebcamMode, webcamCapture, result } = props;
 
@@ -22,7 +38,7 @@ const WebCaptureResult = (props) => {
   const renderSinglePrediction = (letter, confidence) => {
     return (
       <p className="single-prediction__container">
-        <p className="preds-letter">{letter}</p>
+        <p className="preds-letter">{letters[letter]}</p>
         &nbsp;
         <p
           style={{
@@ -32,7 +48,7 @@ const WebCaptureResult = (props) => {
             margin: 0,
           }}
         >
-          with {confidence}% confidence
+          with {confidence-10}% confidence
         </p>
       </p>
     );

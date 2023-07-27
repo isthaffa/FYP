@@ -20,6 +20,7 @@ const letters = {
   a: 'එ',
   ae: 'ඒ',
   o: 'ඔ',
+  oh:'ඔ',
   ohh: 'ඕ',
   k: 'ක්',
   ig: 'ග්',
